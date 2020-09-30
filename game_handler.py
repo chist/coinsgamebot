@@ -45,8 +45,14 @@ class Game_handler:
         """ Accept user's stake """
         
         player_id = message.from_user.id
-        player = Game_handler.players[player_id]
-        
+        try:
+            player = Game_handler.players[player_id]
+        except Exception:
+            player_id = message.from_user.id
+            player_name = message.from_user.first_name
+            player = Player(player_id, player_name, message.chat.id)
+            Game_handler.players[player_id] = player
+
         if player.game is None:
             bot.reply_to(message, "I don't understand your message." +
                     " Start a new game with /newgame command.")
