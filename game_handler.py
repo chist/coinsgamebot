@@ -48,8 +48,12 @@ class Game_handler:
         player = Game_handler.players[player_id]
         
         if player.game is None:
-            bot.reply_to(message, "I don't understand your message.")
+            bot.reply_to(message, "I don't understand your message." +
+                    " Start a new game with /newgame command.")
             return
 
-        stake = int(message.text)
-        player.game.accept_stake(stake, player_id)
+        try:
+            stake = int(message.text)
+            player.game.accept_stake(stake, player_id, message)
+        except Exception:
+            bot.reply_to(message, "Stake value must be an integer value!")

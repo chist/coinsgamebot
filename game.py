@@ -10,8 +10,11 @@ class Player:
         self.balance = None
         self.stake = None
     
-    def receive_msg(self, text):
-        bot.send_message(self.chat_id, text)
+    def receive_msg(self, text, tg_message=None):
+        if tg_message is not None:
+            bot.reply_to(tg_message, text)
+        else:
+            bot.send_message(self.chat_id, text)
 
 
 class Game:
@@ -24,7 +27,6 @@ class Game:
             player.balance = Game.default_balance
             player.game = self
         self.position = Game.field_len // 2
-        self.is_active = True
         self.declare_turn()
 
     def get_player(self, player_id):
@@ -73,14 +75,22 @@ class Game:
             s += "\nLet's make a move!"
             player.receive_msg(s)
 
-    def accept_stake(self, stake, player_id):
+    def accept_stake(self, stake, player_id, tg_message):
         player = self.get_player(player_id)
+
+        if player.stake is not None:
+            player.receive_msg("Your stake cannot be changed!")
+            return
+
         if stake < 0:
             player.receive_msg("Stake must be non-negative!")
         elif player.balance < stake:
-            player.receive_msg("Not enough money!")
+            text = f"Not enough money! You have 💰{player.balance}."
+            player.receive_msg(text, tg_message=tg_message)
         else:
             player.stake = stake
+            text = "Your stake is accepted."
+            player.receive_msg(text, tg_message=tg_message)
 
         # finish this phase
         if self.players[0].stake is not None and \
@@ -132,7 +142,6 @@ class Game:
             self.declare_turn()
 
     def surrender(self, player_id):
-        self.is_active = False
         for player in self.players:
             player.game = None
             if player.id != player_id:
