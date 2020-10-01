@@ -112,7 +112,7 @@ class Game:
             self.players[0].receive_msg("You lost!")
             self.players[1].receive_msg("You won!")
             self.finish_game()
-        if self.position == Game.field_len:
+        if self.position == Game.field_len - 1:
             self.send_status()
             self.players[0].receive_msg("You won!")
             self.players[1].receive_msg("You lost!")
