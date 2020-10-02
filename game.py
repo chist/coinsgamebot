@@ -1,26 +1,4 @@
-from bot import bot
 from threading import Timer
-
-
-class Player:
-    def __init__(self, player_id, player_name, chat_id):
-        self.id = player_id
-        self.name = player_name
-        self.chat_id = chat_id
-        self.game = None
-        self.balance = None
-        self.stake = None
-        self.timer = None
-        self.out_of_time = False
-   
-    def run_out_of_time(self):
-        self.out_of_time = True
-
-    def receive_msg(self, text, tg_message=None):
-        if tg_message is not None:
-            bot.reply_to(tg_message, text)
-        else:
-            bot.send_message(self.chat_id, text)
 
 
 class Game:
@@ -148,7 +126,7 @@ class Game:
             self.players[0].receive_msg("You lost!")
             self.players[1].receive_msg("You won!")
             self.finish_game()
-        if self.position == Game.field_len - 1:
+        elif self.position == Game.field_len - 1:
             self.send_status()
             self.players[0].receive_msg("You won!")
             self.players[1].receive_msg("You lost!")
@@ -182,15 +160,11 @@ class Game:
             player.game = None
             if player.id != player_id:
                 player.receive_msg("Opponent left.")
+        self.finish_game()
 
     def finish_game(self):
         for player in self.players:
-            if player.timer is not None:
-                player.timer.cancel()
-                player.timer = None
-            player.game = None
-            player.balance = None
-            player.out_of_time = False
+            player.go_offline()
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None

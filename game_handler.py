@@ -1,11 +1,14 @@
 from bot import bot
-from queue import Queue
-from game import Player, Game
+from collections import deque
+from player import Player
+from game import Game
+from threading import Timer
 
 
 class Game_handler:
+    search_time = 60.0
     players = {}
-    players_queue = Queue()
+    players_queue = deque()
 
     @bot.message_handler(commands=["start"])
     def send_welcome(message):
@@ -27,18 +30,46 @@ class Game_handler:
         else:
             new_player = Player(player_id, player_name, message.chat.id)
             Game_handler.players[player_id] = new_player
-        
+
         bot.reply_to(message, "Looking for an opponent...")
-        Game_handler.players_queue.put(new_player)
+
+        # reset timer
+        if new_player.timer is not None:
+            new_player.timer.cancel()
+        new_player.timer = Timer(Game_handler.search_time,
+                new_player.stop_searching)
+        new_player.timer.start()
+       
+        # add player to the queue if needed
+        new_player.searching = True
+        if Game_handler.players_queue.count(new_player) == 0:
+            Game_handler.players_queue.append(new_player)
+        else:
+            return
 
         # match players if possible
-        if Game_handler.players_queue.qsize() >= 2:
-            player_a = Game_handler.players_queue.get()
-            player_b = Game_handler.players_queue.get()
-            if player_a.id != player_b.id:
+        while len(Game_handler.players_queue) >= 2:
+            # check if players are still online
+            player_a = Game_handler.players_queue.popleft()
+            if not player_a.searching:
+                continue
+            player_b = Game_handler.players_queue.popleft()
+            if not player_b.searching or player_a.id == player_b.id:
+                Game_handler.players_queue.appendleft(player_a)
+                continue
+
+            # start game
+            for player in [player_a, player_b]:
+                if player.timer is not None:
+                    player.timer.cancel()
+                    player.timer = None
+                player.searching = False
+            try:
                 Game(player_a, player_b)
-            else:
-                Game_handler.players_queue.put(player_a)
+            except Exception as e:
+                print(f"Error during a game. {e}")
+                for player in [player_a, player_b]:
+                    player.quit_after_error()
 
     @bot.message_handler(func=lambda message: True)
     def make_stake(message):
@@ -62,4 +93,5 @@ class Game_handler:
             stake = int(message.text)
             player.game.accept_stake(stake, player_id, message)
         except Exception:
-            bot.reply_to(message, "Stake value must be an integer value!")
+            bot.reply_to(message, "Stake value must be an integer number!")
+
