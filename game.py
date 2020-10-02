@@ -1,4 +1,5 @@
 from bot import bot
+from threading import Timer
 
 
 class Player:
@@ -9,7 +10,12 @@ class Player:
         self.game = None
         self.balance = None
         self.stake = None
-    
+        self.timer = None
+        self.out_of_time = False
+   
+    def run_out_of_time(self):
+        self.out_of_time = True
+
     def receive_msg(self, text, tg_message=None):
         if tg_message is not None:
             bot.reply_to(tg_message, text)
@@ -20,7 +26,10 @@ class Player:
 class Game:
     default_balance = 20
     field_len = 5
-
+    turn_duration = 30.0
+    delay = 1.0
+    timer = None
+    
     def __init__(self, player_a, player_b):
         self.players = [player_a, player_b]
         for player in self.players:
@@ -68,12 +77,37 @@ class Game:
             s = self.get_status_str(player)
             player.receive_msg(s)
 
+    def check_time(self):
+        """ Check if the game must be finished because of time limit """
+
+        text_winner = "You opponent is out of time. You won."
+        text_loser = "You're out of time! You lost."
+        text_draw = "You're both out of time. It's a draw."
+        if self.players[0].out_of_time and not self.players[1].out_of_time:
+            self.players[0].receive_msg(text_loser)
+            self.players[1].receive_msg(text_winner)
+        elif not self.players[0].out_of_time and self.players[1].out_of_time:
+            self.players[0].receive_msg(text_winner)
+            self.players[1].receive_msg(text_loser)
+        elif self.players[0].out_of_time and self.players[1].out_of_time:
+            self.players[0].receive_msg(text_draw)
+            self.players[1].receive_msg(text_draw)
+        else:
+            return
+        self.finish_game()
+
     def declare_turn(self):
         for player in self.players:
             player.stake = None
             s = self.get_status_str(player)
             s += "\nLet's make a move!"
+            s += f"\nYou have {int(Game.turn_duration)} seconds."
             player.receive_msg(s)
+            player.timer = Timer(Game.turn_duration, player.run_out_of_time)
+            player.timer.start()
+        time = Game.turn_duration + Game.delay
+        self.timer = Timer(time, self.check_time)
+        self.timer.start()
 
     def accept_stake(self, stake, player_id, tg_message):
         player = self.get_player(player_id)
@@ -88,6 +122,7 @@ class Game:
             text = f"Not enough money! You have 💰{player.balance}."
             player.receive_msg(text, tg_message=tg_message)
         else:
+            player.timer.cancel()
             player.stake = stake
             text = "Your stake is accepted."
             player.receive_msg(text, tg_message=tg_message)
@@ -95,6 +130,7 @@ class Game:
         # finish this phase
         if self.players[0].stake is not None and \
                 self.players[1].stake is not None:
+            self.timer.cancel()
             self.process_move()
 
     def process_move(self):
@@ -149,6 +185,13 @@ class Game:
 
     def finish_game(self):
         for player in self.players:
+            if player.timer is not None:
+                player.timer.cancel()
+                player.timer = None
             player.game = None
             player.balance = None
+            player.out_of_time = False
+        if self.timer is not None:
+            self.timer.cancel()
+            self.timer = None
 
