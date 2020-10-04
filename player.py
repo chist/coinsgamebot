@@ -23,6 +23,11 @@ class Player:
         """ Turn is finished because of time limit """
         self.out_of_time = True
 
+    def start_turn_phase(self, time, msg_text):
+        self.receive_msg(msg_text)
+        self.timer = Timer(time, self.run_out_of_time)
+        self.timer.start()
+
     def receive_msg(self, text, tg_message=None):
         if tg_message is not None:
             bot.reply_to(tg_message, text)

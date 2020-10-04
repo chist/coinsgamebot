@@ -13,6 +13,7 @@ class Game:
         for player in self.players:
             player.balance = Game.default_balance
             player.game = self
+            player.searching = False
         self.position = Game.field_len // 2
         self.declare_turn()
 
@@ -20,6 +21,16 @@ class Game:
         for player in self.players:
             if player.id == player_id:
                 return player
+
+    def get_advantage(self, player_id):
+        for player_idx, player in enumerate(self.players):
+            if player.id != player_id:
+                continue
+
+            if player_idx == 0:
+                return self.position - (Game.field_len) // 2
+            else:
+                return (Game.field_len // 2) - self.position
 
     def get_position_str(self, player_id):
         if player_id == self.players[1].id:
@@ -80,14 +91,12 @@ class Game:
             s = self.get_status_str(player)
             s += "\nLet's make a move!"
             s += f"\nYou have {int(Game.turn_duration)} seconds."
-            player.receive_msg(s)
-            player.timer = Timer(Game.turn_duration, player.run_out_of_time)
-            player.timer.start()
+            player.start_turn_phase(time=Game.turn_duration, msg_text=s)
         time = Game.turn_duration + Game.delay
         self.timer = Timer(time, self.check_time)
         self.timer.start()
 
-    def accept_stake(self, stake, player_id, tg_message):
+    def accept_stake(self, stake, player_id, tg_message=None):
         player = self.get_player(player_id)
 
         if player.stake is not None:
@@ -100,7 +109,8 @@ class Game:
             text = f"Not enough money! You have 💰{player.balance}."
             player.receive_msg(text, tg_message=tg_message)
         else:
-            player.timer.cancel()
+            if player.timer is not None:
+                player.timer.cancel()
             player.stake = stake
             text = "Your stake is accepted."
             player.receive_msg(text, tg_message=tg_message)
