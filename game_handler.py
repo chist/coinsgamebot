@@ -10,10 +10,14 @@ class Game_handler:
     search_time = 60.0
     players = {}
     players_queue = deque()
+    rules_link = "https://telegra.ph/Coins-game-rules-10-05"
 
     @bot.message_handler(commands=["start"])
     def send_welcome(message):
-        bot.reply_to(message, "Welcome!")
+        text_reply = "See the rules there:\n"
+        text_reply += Game_handler.rules_link + "\n\n"
+        text_reply += "Start a new game with /singleplayer or /multiplayer."
+        bot.reply_to(message, text_reply)
    
     def find_player(message):
         """ Find message sender among known players """
