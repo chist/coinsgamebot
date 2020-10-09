@@ -40,7 +40,7 @@ class Game_handler:
     @bot.message_handler(commands=["singleplayer"])
     def single_player(message):
         """ create game with bot """
-
+        
         player_a = Game_handler.find_player(message)
         player_b = PlayerAI(player_id=0, player_name="AI", chat_id=None)
         Game_handler.start_game(player_a, player_b) 
@@ -84,7 +84,7 @@ class Game_handler:
 
         if player.game is None:
             bot.reply_to(message, "I don't understand your message." +
-                    " Start a new game with /newgame command.")
+                    " Start a new game with /singleplayer or /multiplayer.")
             return
 
         try:
@@ -114,7 +114,7 @@ class Game_handler:
             if player.timer is not None:
                 player.timer.cancel()
                 player.timer = None
-        
+ 
         try:
             Game(player_a, player_b)
         except Exception as e:

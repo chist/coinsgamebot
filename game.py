@@ -4,7 +4,7 @@ from threading import Timer
 class Game:
     default_balance = 20
     field_len = 5
-    turn_duration = 30.0
+    turn_duration = 20.0
     delay = 1.0
     timer = None
     
@@ -21,16 +21,6 @@ class Game:
         for player in self.players:
             if player.id == player_id:
                 return player
-
-    def get_advantage(self, player_id):
-        for player_idx, player in enumerate(self.players):
-            if player.id != player_id:
-                continue
-
-            if player_idx == 0:
-                return self.position - (Game.field_len) // 2
-            else:
-                return (Game.field_len // 2) - self.position
 
     def get_position_str(self, player_id):
         if player_id == self.players[1].id:
@@ -118,7 +108,8 @@ class Game:
         # finish this phase
         if self.players[0].stake is not None and \
                 self.players[1].stake is not None:
-            self.timer.cancel()
+            if self.timer is not None:
+                self.timer.cancel()
             self.process_move()
 
     def process_move(self):
