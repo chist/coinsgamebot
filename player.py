@@ -1,4 +1,4 @@
-from bot import bot
+from bot import bot, markup
 from threading import Timer
 
 
@@ -17,7 +17,7 @@ class Player:
     def stop_searching(self):
         """ Stop searching for an opponent """
         self.searching = False
-        self.receive_msg("No one is online :(")
+        self.receive_msg("No one is online :(", keyboard=True)
 
     def run_out_of_time(self):
         """ Turn is finished because of time limit """
@@ -28,7 +28,11 @@ class Player:
         self.timer = Timer(time, self.run_out_of_time)
         self.timer.start()
 
-    def receive_msg(self, text, tg_message=None):
+    def receive_msg(self, text, tg_message=None, keyboard=False):
+        if keyboard:
+            bot.send_message(self.chat_id, text, reply_markup=markup)
+            return
+
         if tg_message is not None:
             bot.reply_to(tg_message, text)
         else:
@@ -44,6 +48,6 @@ class Player:
         self.out_of_time = False
 
     def quit_after_error(self):
-        self.receive_msg("Sorry, unexpected error has occured.")
+        self.receive_msg("Sorry, unexpected error has occured.", keyboard=True)
         self.go_offline()
 

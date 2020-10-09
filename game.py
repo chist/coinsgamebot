@@ -63,14 +63,14 @@ class Game:
         text_loser = "You're out of time! You lost."
         text_draw = "You're both out of time. It's a draw."
         if self.players[0].out_of_time and not self.players[1].out_of_time:
-            self.players[0].receive_msg(text_loser)
-            self.players[1].receive_msg(text_winner)
+            self.players[0].receive_msg(text_loser, keyboard=True)
+            self.players[1].receive_msg(text_winner, keyboard=True)
         elif not self.players[0].out_of_time and self.players[1].out_of_time:
-            self.players[0].receive_msg(text_winner)
-            self.players[1].receive_msg(text_loser)
+            self.players[0].receive_msg(text_winner, keyboard=True)
+            self.players[1].receive_msg(text_loser, keyboard=True)
         elif self.players[0].out_of_time and self.players[1].out_of_time:
-            self.players[0].receive_msg(text_draw)
-            self.players[1].receive_msg(text_draw)
+            self.players[0].receive_msg(text_draw, keyboard=True)
+            self.players[1].receive_msg(text_draw, keyboard=True)
         else:
             return
         self.finish_game()
@@ -124,34 +124,34 @@ class Game:
        
         if self.position == 0:
             self.send_status()
-            self.players[0].receive_msg("You lost!")
-            self.players[1].receive_msg("You won!")
+            self.players[0].receive_msg("You lost!", keyboard=True)
+            self.players[1].receive_msg("You won!", keyboard=True)
             self.finish_game()
         elif self.position == Game.field_len - 1:
             self.send_status()
-            self.players[0].receive_msg("You won!")
-            self.players[1].receive_msg("You lost!")
+            self.players[0].receive_msg("You won!", keyboard=True)
+            self.players[1].receive_msg("You lost!", keyboard=True)
             self.finish_game()
         elif self.players[0].balance == 0 and \
                 self.players[1].balance >= self.position:
             self.send_status()
-            self.players[0].receive_msg("You're out of money! You lost!")
+            self.players[0].receive_msg("You're out of money! You lost!", keyboard=True)
             self.players[1].receive_msg("You won!" +
-                    " Your opponent spent all the money.")
+                    " Your opponent spent all the money.", keyboard=True)
             self.finish_game()
         elif self.players[1].balance == 0 and \
                 self.players[0].balance >= Game.field_len - self.position - 1:
             self.send_status()
-            self.players[1].receive_msg("You're out of money! You lost!")
+            self.players[1].receive_msg("You're out of money! You lost!", keyboard=True)
             self.players[0].receive_msg("You won!" +
-                    " Your opponent spent all the money.")
+                    " Your opponent spent all the money.", keyboard=True)
             self.finish_game()
         elif self.players[0].balance < Game.field_len - self.position - 1 and \
                 self.players[1].balance < self.position:
             self.send_status()
             msg = "It's a draw. No one has enough money to win."
-            self.players[0].receive_msg(msg)
-            self.players[1].receive_msg(msg)
+            self.players[0].receive_msg(msg, keyboard=True)
+            self.players[1].receive_msg(msg, keyboard=True)
             self.finish_game()
         else:
             self.declare_turn()
@@ -160,7 +160,7 @@ class Game:
         for player in self.players:
             player.game = None
             if player.id != player_id:
-                player.receive_msg("Opponent left.")
+                player.receive_msg("Opponent left.", keyboard=True)
         self.finish_game()
 
     def finish_game(self):

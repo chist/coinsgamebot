@@ -1,4 +1,5 @@
 import telebot
+from telebot import types
 import config
 
 
@@ -20,4 +21,12 @@ class Bot:
             Bot.__instance = telebot.TeleBot(config.telegram_token)
 
 
+# create telegram bot instance
 bot = Bot.get_instance()
+
+# create custom keyboard for the game
+markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+btn1 = types.KeyboardButton('/rules')
+btn2 = types.KeyboardButton('/singleplayer')
+btn3 = types.KeyboardButton('/multiplayer')
+markup.add(btn1, btn2, btn3)

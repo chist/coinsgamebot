@@ -1,4 +1,4 @@
-from bot import bot
+from bot import bot, markup
 from collections import deque
 from player import Player
 from ai import PlayerAI
@@ -12,12 +12,12 @@ class Game_handler:
     players_queue = deque()
     rules_link = "https://telegra.ph/Coins-game-rules-10-05"
 
-    @bot.message_handler(commands=["start"])
+    @bot.message_handler(commands=["start", "rules"])
     def send_welcome(message):
         text_reply = "See the rules there:\n"
         text_reply += Game_handler.rules_link + "\n\n"
         text_reply += "Start a new game with /singleplayer or /multiplayer."
-        bot.reply_to(message, text_reply)
+        bot.reply_to(message, text_reply, reply_markup=markup)
    
     def find_player(message):
         """ Find message sender among known players """
@@ -40,7 +40,7 @@ class Game_handler:
     @bot.message_handler(commands=["singleplayer"])
     def single_player(message):
         """ create game with bot """
-        
+
         player_a = Game_handler.find_player(message)
         player_b = PlayerAI(player_id=0, player_name="AI", chat_id=None)
         Game_handler.start_game(player_a, player_b) 
@@ -84,7 +84,8 @@ class Game_handler:
 
         if player.game is None:
             bot.reply_to(message, "I don't understand your message." +
-                    " Start a new game with /singleplayer or /multiplayer.")
+                    " Start a new game with /singleplayer or /multiplayer.",
+                    reply_markup=markup)
             return
 
         try:
@@ -114,7 +115,7 @@ class Game_handler:
             if player.timer is not None:
                 player.timer.cancel()
                 player.timer = None
- 
+
         try:
             Game(player_a, player_b)
         except Exception as e:

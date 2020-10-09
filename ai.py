@@ -86,5 +86,5 @@ class PlayerAI(Player):
                 print(f"Error in start_turn_phase(). {e}")
 
 
-    def receive_msg(self, text, tg_message=None):
+    def receive_msg(self, text, tg_message=None, keyboard=False):
         return
