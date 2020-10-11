@@ -17,9 +17,14 @@ class Game_handler:
         text_reply = "See the rules there:\n"
         text_reply += Game_handler.rules_link + "\n\n"
         text_reply += "Start a new game with /singleplayer or /multiplayer."
-        bot.reply_to(message, text_reply, reply_markup=markup)
+        
+        # decide if custom keyboard is needed
+        player = Game_handler.find_player(message, new_game=False)
+        reply_markup = markup if player.game is None else None
+
+        bot.reply_to(message, text_reply, reply_markup=reply_markup)
    
-    def find_player(message):
+    def find_player(message, new_game=True):
         """ Find message sender among known players """
         
         # get player info
@@ -28,7 +33,7 @@ class Game_handler:
         
         # find the player among known players 
         if player_id in Game_handler.players.keys():
-            if Game_handler.players[player_id].game is not None:
+            if Game_handler.players[player_id].game is not None and new_game:
                 Game_handler.players[player_id].game.surrender(player_id)
             player = Game_handler.players[player_id]
         else:
@@ -45,12 +50,13 @@ class Game_handler:
         player_b = PlayerAI(player_id=0, player_name="AI", chat_id=None)
         Game_handler.start_game(player_a, player_b) 
 
-    @bot.message_handler(commands=["newgame", "multiplayer"])
+    @bot.message_handler(commands=["multiplayer"])
     def multiplayer(message):
         """ Add player to the queue """
         
         new_player = Game_handler.find_player(message)
-        bot.reply_to(message, "Looking for an opponent...")
+        bot.reply_to(message, "Looking for an opponent...",
+                reply_markup=markup)
 
         # reset timer
         if new_player.timer is not None:

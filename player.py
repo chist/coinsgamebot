@@ -29,14 +29,15 @@ class Player:
         self.timer.start()
 
     def receive_msg(self, text, tg_message=None, keyboard=False):
-        if keyboard:
-            bot.send_message(self.chat_id, text, reply_markup=markup)
-            return
+        """ send message back to user """
+
+        # decide if custom keyboard is needed
+        reply_markup = markup if (keyboard and self.game is None) else None
 
         if tg_message is not None:
-            bot.reply_to(tg_message, text)
+            bot.reply_to(tg_message, text, reply_markup=reply_markup)
         else:
-            bot.send_message(self.chat_id, text)
+            bot.send_message(self.chat_id, text, reply_markup=reply_markup)
 
     def go_offline(self):
         """ reset game stats """
