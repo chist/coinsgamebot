@@ -83,6 +83,8 @@ class Game:
             s += f"\nYou have {int(Game.turn_duration)} seconds."
             player.start_turn_phase(time=Game.turn_duration, msg_text=s)
         time = Game.turn_duration + Game.delay
+        if self.timer is not None:
+            self.timer.cancel()
         self.timer = Timer(time, self.check_time)
         self.timer.start()
 
@@ -135,14 +137,16 @@ class Game:
         elif self.players[0].balance == 0 and \
                 self.players[1].balance >= self.position:
             self.send_status()
-            self.players[0].receive_msg("You're out of money! You lost!", keyboard=True)
+            self.players[0].receive_msg("You're out of money! You lost!",
+                    keyboard=True)
             self.players[1].receive_msg("You won!" +
                     " Your opponent spent all the money.", keyboard=True)
             self.finish_game()
         elif self.players[1].balance == 0 and \
                 self.players[0].balance >= Game.field_len - self.position - 1:
             self.send_status()
-            self.players[1].receive_msg("You're out of money! You lost!", keyboard=True)
+            self.players[1].receive_msg("You're out of money! You lost!",
+                    keyboard=True)
             self.players[0].receive_msg("You won!" +
                     " Your opponent spent all the money.", keyboard=True)
             self.finish_game()
