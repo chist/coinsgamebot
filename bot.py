@@ -17,7 +17,6 @@ class Bot:
         if Bot.__instance is not None:
             raise Exception("This class is a singleton!")
         else:
-            telebot.apihelper.proxy = config.proxy_settings
             Bot.__instance = telebot.TeleBot(config.telegram_token)
 
 
