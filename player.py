@@ -1,12 +1,30 @@
 from bot import bot, markup
 from threading import Timer
+from pymongo import MongoClient
 
 
 class Player:
+    # database client
+    client = MongoClient('mongodb://localhost:27017/')
+    
     def __init__(self, player_id, player_name, chat_id):
-        self.id = player_id
-        self.name = player_name
-        self.chat_id = chat_id
+        """ initialize new player instance """
+
+        # find player info in database
+        with Player.client as client:
+            db = client.game_db
+            user = db.players.find_one({"id": player_id})
+            if user is None:
+                # add user to database
+                user = {"id": player_id,
+                        "name": player_name,
+                        "chat_id": chat_id,
+                        "games_num": 0}
+                db.players.insert(user)
+        
+        self.id = user["id"]
+        self.name = user["name"]
+        self.chat_id = user["chat_id"]
         self.game = None
         self.balance = None
         self.stake = None
@@ -39,8 +57,19 @@ class Player:
         else:
             bot.send_message(self.chat_id, text, reply_markup=reply_markup)
 
+    def update_info(self):
+        with Player.client as client:
+            db = client.game_db
+            user = db.players.find_one({"id": self.id})
+            db.players.update({"_id": user["_id"]}, {"$inc": {"games_num": 1}}) 
+
     def go_offline(self):
-        """ reset game stats """
+        """ finish the game """
+
+        # update player's info
+        self.update_info()
+
+        # reset game variables
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None
