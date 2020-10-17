@@ -1,4 +1,5 @@
 from threading import Timer
+from elo import rate_1vs1
 
 
 class Game:
@@ -65,15 +66,15 @@ class Game:
         if self.players[0].out_of_time and not self.players[1].out_of_time:
             self.players[0].receive_msg(text_loser, keyboard=True)
             self.players[1].receive_msg(text_winner, keyboard=True)
+            self.finish_game(winner_idx=1)
         elif not self.players[0].out_of_time and self.players[1].out_of_time:
             self.players[0].receive_msg(text_winner, keyboard=True)
             self.players[1].receive_msg(text_loser, keyboard=True)
+            self.finish_game(winner_idx=0)
         elif self.players[0].out_of_time and self.players[1].out_of_time:
             self.players[0].receive_msg(text_draw, keyboard=True)
             self.players[1].receive_msg(text_draw, keyboard=True)
-        else:
-            return
-        self.finish_game()
+            self.finish_game(winner_idx=None)
 
     def declare_turn(self):
         for player in self.players:
@@ -126,37 +127,37 @@ class Game:
        
         if self.position == 0:
             self.send_status()
-            self.finish_game()
             self.players[0].receive_msg("You lost!", keyboard=True)
             self.players[1].receive_msg("You won!", keyboard=True)
+            self.finish_game(winner_idx=1)
         elif self.position == Game.field_len - 1:
             self.send_status()
-            self.finish_game()
             self.players[0].receive_msg("You won!", keyboard=True)
             self.players[1].receive_msg("You lost!", keyboard=True)
+            self.finish_game(winner_idx=0)
         elif self.players[0].balance == 0 and \
                 self.players[1].balance >= self.position:
             self.send_status()
-            self.finish_game()
             self.players[0].receive_msg("You're out of money! You lost!",
                     keyboard=True)
             self.players[1].receive_msg("You won!" +
                     " Your opponent spent all the money.", keyboard=True)
+            self.finish_game(winner_idx=1)
         elif self.players[1].balance == 0 and \
                 self.players[0].balance >= Game.field_len - self.position - 1:
             self.send_status()
-            self.finish_game()
             self.players[1].receive_msg("You're out of money! You lost!",
                     keyboard=True)
             self.players[0].receive_msg("You won!" +
                     " Your opponent spent all the money.", keyboard=True)
+            self.finish_game(winner_idx=0)
         elif self.players[0].balance < Game.field_len - self.position - 1 and \
                 self.players[1].balance < self.position:
             self.send_status()
-            self.finish_game()
             msg = "It's a draw. No one has enough money to win."
             self.players[0].receive_msg(msg, keyboard=True)
             self.players[1].receive_msg(msg, keyboard=True)
+            self.finish_game(winner_idx=None)
         else:
             self.declare_turn()
 
@@ -165,10 +166,52 @@ class Game:
             player.game = None
             if player.id != player_id:
                 player.receive_msg("Opponent left.", keyboard=True)
-        self.finish_game()
+        winner_idx = 1 if player_id == self.players[0].id else 0
+        self.finish_game(winner_idx=winner_idx, rating_msg=False)
+    
+    def update_ratings(self, winner_idx=None):
+        """ update player ratings
+        
+            winner_idx is 0,    if self.players[0] has won
+                          1,    if self.players[1] has won
+                          None, otherwise
+        """
+  
+        if winner_idx == 0:
+            rtgs = rate_1vs1(self.players[0].rating, self.players[1].rating)
+            self.players[0].rating_up = True
+            self.players[1].rating_up = False
+            self.players[0].rating = rtgs[0]
+            self.players[1].rating = rtgs[1]
+        elif winner_idx == 1:
+            rtgs = rate_1vs1(self.players[1].rating, self.players[0].rating)
+            self.players[0].rating_up = False
+            self.players[1].rating_up = True
+            self.players[1].rating = rtgs[0]
+            self.players[0].rating = rtgs[1]
+        elif winner_idx is None:
+            rtgs = rate_1vs1(self.players[0].rating, self.players[1].rating,
+                    drawn=True)
+            if self.players[0].rating > self.players[1].rating:
+                self.players[0].rating_up = False
+                self.players[1].rating_up = True
+            elif self.players[0].rating < self.players[1].rating:
+                self.players[0].rating_up = True
+                self.players[1].rating_up = False
+            else:
+                self.players[0].rating_up = True
+                self.players[1].rating_up = True
+            self.players[0].rating = rtgs[0]
+            self.players[1].rating = rtgs[1]
 
-    def finish_game(self):
+    def finish_game(self, winner_idx=None, rating_msg=True):
+        self.update_ratings(winner_idx=winner_idx)
         for player in self.players:
+            rating = int(round(player.rating))
+            if rating_msg:
+                pic = "📈" if player.rating_up else "📉"
+                player.receive_msg(f"Your rating is updated: {pic}{rating}.",
+                        keyboard=True)
             player.go_offline()
         if self.timer is not None:
             self.timer.cancel()

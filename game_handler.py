@@ -55,8 +55,7 @@ class Game_handler:
         """ Add player to the queue """
         
         new_player = Game_handler.find_player(message)
-        bot.reply_to(message, "Looking for an opponent...",
-                reply_markup=markup)
+        bot.reply_to(message, "Looking for an opponent...")
 
         # reset timer
         if new_player.timer is not None:

@@ -6,11 +6,13 @@ from pymongo import MongoClient
 class Player:
     # database client
     client = MongoClient('mongodb://localhost:27017/')
-    
+
+    default_rating = 1200
+
     def __init__(self, player_id, player_name, chat_id):
         """ initialize new player instance """
 
-        # find player info in database
+        # find player info in a database
         with Player.client as client:
             db = client.game_db
             user = db.players.find_one({"id": player_id})
@@ -19,12 +21,14 @@ class Player:
                 user = {"id": player_id,
                         "name": player_name,
                         "chat_id": chat_id,
-                        "games_num": 0}
+                        "games_num": 0,
+                        "rating": Player.default_rating}
                 db.players.insert(user)
         
         self.id = user["id"]
         self.name = user["name"]
         self.chat_id = user["chat_id"]
+        self.rating = user["rating"]
         self.game = None
         self.balance = None
         self.stake = None
@@ -58,10 +62,13 @@ class Player:
             bot.send_message(self.chat_id, text, reply_markup=reply_markup)
 
     def update_info(self):
+        """ save info updates to database  """
+
         with Player.client as client:
             db = client.game_db
             user = db.players.find_one({"id": self.id})
-            db.players.update({"_id": user["_id"]}, {"$inc": {"games_num": 1}}) 
+            db.players.update({"_id": user["_id"]}, {"$inc": {"games_num": 1},
+                "$set": {"rating": self.rating}}) 
 
     def go_offline(self):
         """ finish the game """
