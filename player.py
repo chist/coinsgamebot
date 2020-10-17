@@ -1,11 +1,12 @@
 from bot import bot, markup
 from threading import Timer
 from pymongo import MongoClient
+from config import mongo_path
 
 
 class Player:
     # database client
-    client = MongoClient('mongodb://localhost:27017/')
+    client = MongoClient(mongo_path)
 
     default_rating = 1200
 

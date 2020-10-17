@@ -11,3 +11,6 @@ lstn = '0.0.0.0'  # In some VPS you may need to put here the IP address
 # ssl sertificate
 ssl_sert = './public.pem'   # Path to the ssl certificate
 ssl_priv = './private.key'  # Path to the ssl private key
+
+# access to Mongo DataBase
+mongo_path = 'mongodb://localhost:27017/'

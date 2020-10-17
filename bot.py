@@ -24,8 +24,11 @@ class Bot:
 bot = Bot.get_instance()
 
 # create custom keyboard for the game
-markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
-btn1 = types.KeyboardButton('/rules')
+markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+btn0 = types.KeyboardButton('/rules')
+btn1 = types.KeyboardButton('/top')
 btn2 = types.KeyboardButton('/singleplayer')
 btn3 = types.KeyboardButton('/multiplayer')
-markup.add(btn1, btn2, btn3)
+markup.row(btn0, btn1)
+markup.row(btn2)
+markup.row(btn3)

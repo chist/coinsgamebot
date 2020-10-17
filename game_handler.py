@@ -4,13 +4,42 @@ from player import Player
 from ai import PlayerAI
 from game import Game
 from threading import Timer
+import pymongo
+from config import mongo_path
 
 
 class Game_handler:
+    # database client
+    client = pymongo.MongoClient(mongo_path)
+    
     search_time = 60.0
     players = {}
     players_queue = deque()
     rules_link = "https://telegra.ph/Coins-game-rules-10-05"
+    top_size = 10
+    
+    @bot.message_handler(commands=["top"])
+    def get_top(message):
+        users, text_reply = [], ""
+        with Game_handler.client as client:
+            db = client.game_db
+            users = db.players.find().sort("rating", pymongo.DESCENDING)
+        users = list(users[:Game_handler.top_size])
+        max_name_len = max([len(user["name"]) for user in users])
+        for idx, user in enumerate(users):
+            rating = int(round(user["rating"]))
+            name_str = user["name"]
+            new_str = f"{idx + 1}. (⭐️{rating}) {name_str}\n"
+            if user["id"] == message.from_user.id:
+                new_str = "*" + new_str + "*"
+            text_reply += new_str
+
+        # decide if custom keyboard is needed
+        player = Game_handler.find_player(message, new_game=False)
+        reply_markup = markup if player.game is None else None
+        
+        bot.reply_to(message, text_reply, reply_markup=reply_markup,
+                parse_mode="Markdown")
 
     @bot.message_handler(commands=["start", "rules"])
     def send_welcome(message):
