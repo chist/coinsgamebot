@@ -6,7 +6,7 @@ import time
 
 class PlayerAI(Player):
     def __init__(self, player_id, player_name, chat_id,
-            cheat_central=0.25, cheat_defeat=0.3):
+            cheat_central=0.25, cheat_defeat=0.4):
         super().__init__(player_id, player_name, chat_id)
         self.cheat_central, self.cheat_defeat = cheat_central, cheat_defeat
         random.seed()
@@ -39,8 +39,10 @@ class PlayerAI(Player):
                     if opponent.game is None:
                         return 0
                     time.sleep(0.2)
-                stake = min(default_balance - d, opponent.stake + d)
-                return stake
+
+                if opponent.stake <= self.game.default_balnce // 2 + 2:
+                    stake = min(default_balance - d, opponent.stake + d)
+                    return stake
         except:
             pass
 
@@ -65,7 +67,8 @@ class PlayerAI(Player):
                         return 0
                     time.sleep(0.2)
                 if opponent.stake > stake:
-                    stake = random.randint(opponent.stake, self.balance)
+                    stake = random.randint(opponent.stake, 
+                            min(self.balance, opponent.balance))
         except:
             pass
 
